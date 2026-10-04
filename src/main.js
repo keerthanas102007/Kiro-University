@@ -1,4 +1,5 @@
 import { TaskManager } from './services/TaskManager.js';
+import { StorageService } from './services/StorageService.js';
 
 /**
  * Main Application Entry Point
@@ -6,25 +7,82 @@ import { TaskManager } from './services/TaskManager.js';
 class App {
   constructor() {
     this.taskManager = new TaskManager();
+    this.storageService = new StorageService();
     this.init();
   }
 
   async init() {
     console.log('Todo App initialized');
     
-    // Create a sample task for demonstration
-    const result = this.taskManager.createTask('Welcome to Todo App', {
-      description: 'This is your first task. Click to edit or mark as complete.',
-      priority: 'Medium',
-      category: 'Getting Started',
-    });
+    // Load tasks from storage
+    const loadResult = this.storageService.loadTasks();
+    
+    if (loadResult.success && loadResult.data.length > 0) {
+      // Load existing tasks
+      this.taskManager.loadTasks(loadResult.data);
+      console.log(`Loaded ${loadResult.data.length} tasks from storage`);
+    } else if (!loadResult.success) {
+      // Show error notification if data was corrupted
+      this.showNotification(
+        'error',
+        'Previous task data could not be recovered. Starting with empty list.'
+      );
+    } else {
+      // No tasks stored, create a welcome task
+      const result = this.taskManager.createTask('Welcome to Todo App', {
+        description: 'This is your first task. Try creating, completing, or deleting tasks!',
+        priority: 'Medium',
+        category: 'Getting Started',
+      });
 
-    if (result.success) {
-      console.log('Sample task created:', result.data);
+      if (result.success) {
+        console.log('Sample task created:', result.data);
+        this.saveTasks();
+      }
     }
 
     this.renderTaskForm();
     this.renderTasks();
+  }
+
+  /**
+   * Save all tasks to localStorage
+   */
+  saveTasks() {
+    const tasks = this.taskManager.getAllTasks();
+    const result = this.storageService.saveTasks(tasks.map(task => task));
+    
+    if (!result.success) {
+      this.showNotification('error', result.error);
+    }
+  }
+
+  /**
+   * Show a notification to the user
+   */
+  showNotification(type, message) {
+    const container = document.getElementById('notification-container');
+    if (!container) return;
+
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+      background: ${type === 'error' ? '#fee2e2' : '#dbeafe'};
+      color: ${type === 'error' ? '#991b1b' : '#1e40af'};
+      border: 1px solid ${type === 'error' ? '#fecaca' : '#bfdbfe'};
+      animation: slideIn 0.3s ease;
+    `;
+    notification.textContent = message;
+
+    container.appendChild(notification);
+
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      notification.style.animation = 'slideOut 0.3s ease';
+      setTimeout(() => notification.remove(), 300);
+    }, 5000);
   }
 
   renderTaskForm() {
@@ -99,6 +157,9 @@ class App {
       // Clear form
       document.getElementById('task-form').reset();
       document.getElementById('form-error').style.display = 'none';
+      
+      // Save to storage
+      this.saveTasks();
       
       // Re-render tasks
       this.renderTasks();
@@ -254,6 +315,9 @@ class App {
     }
 
     if (result.success) {
+      // Save to storage
+      this.saveTasks();
+      
       // Animate the status change
       this.animateTaskCompletion(taskId, result.data.status === 'completed');
       
@@ -272,6 +336,9 @@ class App {
     setTimeout(() => {
       const result = this.taskManager.deleteTask(taskId);
       if (result.success) {
+        // Save to storage
+        this.saveTasks();
+        
         this.renderTasks();
       }
     }, 300);
