@@ -1,6 +1,7 @@
 import { TaskManager } from './services/TaskManager.js';
 import { StorageService } from './services/StorageService.js';
 import { FilterEngine } from './services/FilterEngine.js';
+import { StatisticsCalculator } from './services/StatisticsCalculator.js';
 
 /**
  * Main Application Entry Point
@@ -10,6 +11,7 @@ class App {
     this.taskManager = new TaskManager();
     this.storageService = new StorageService();
     this.filterEngine = new FilterEngine();
+    this.statisticsCalculator = new StatisticsCalculator();
     this.filterCriteria = {
       searchQuery: '',
       priorities: [],
@@ -53,6 +55,7 @@ class App {
 
     this.renderTaskForm();
     this.renderFilterPanel();
+    this.renderStatistics();
     this.renderTasks();
   }
 
@@ -288,6 +291,89 @@ class App {
     });
   }
 
+  renderStatistics() {
+    const statisticsContainer = document.getElementById('statistics-view');
+    if (!statisticsContainer) return;
+
+    const allTasks = this.taskManager.getAllTasks();
+    const stats = this.statisticsCalculator.calculateStatistics(allTasks);
+
+    const categories = Object.keys(stats.tasksByCategory);
+
+    statisticsContainer.innerHTML = `
+      <div class="stats-container">
+        <!-- Progress Bar Section -->
+        <div class="stats-progress-card">
+          <div class="stats-progress-header">
+            <span class="stats-progress-title">Overall Progress</span>
+            <span class="stats-progress-percent" id="stats-percentage">${stats.completionPercentage}%</span>
+          </div>
+          <div class="progress-bar-track" aria-label="Progress bar">
+            <div 
+              class="progress-bar-fill" 
+              id="stats-progress-fill"
+              style="width: ${stats.completionPercentage}%;"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Metric Grid -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-value" id="stat-total">${stats.totalTasks}</span>
+            <span class="stat-label">Total Tasks</span>
+          </div>
+          <div class="stat-card stat-card-active">
+            <span class="stat-value" id="stat-active">${stats.activeTasks}</span>
+            <span class="stat-label">Active</span>
+          </div>
+          <div class="stat-card stat-card-completed">
+            <span class="stat-value" id="stat-completed">${stats.completedTasks}</span>
+            <span class="stat-label">Completed</span>
+          </div>
+        </div>
+
+        <!-- Priority Breakdown -->
+        <div class="stats-section">
+          <h4 class="stats-section-title">Priority Breakdown</h4>
+          <div class="stats-pills-list">
+            <div class="stat-pill stat-pill-critical">
+              <span>Critical</span>
+              <strong>${stats.tasksByPriority.Critical || 0}</strong>
+            </div>
+            <div class="stat-pill stat-pill-high">
+              <span>High</span>
+              <strong>${stats.tasksByPriority.High || 0}</strong>
+            </div>
+            <div class="stat-pill stat-pill-medium">
+              <span>Medium</span>
+              <strong>${stats.tasksByPriority.Medium || 0}</strong>
+            </div>
+            <div class="stat-pill stat-pill-low">
+              <span>Low</span>
+              <strong>${stats.tasksByPriority.Low || 0}</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Category Breakdown -->
+        ${categories.length > 0 ? `
+          <div class="stats-section">
+            <h4 class="stats-section-title">Category Breakdown</h4>
+            <div class="stats-categories-list">
+              ${categories.map(cat => `
+                <div class="stat-category-item">
+                  <span class="stat-category-name">${this.escapeHtml(cat)}</span>
+                  <span class="stat-category-count">${stats.tasksByCategory[cat]}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
   renderTaskForm() {
     const formContainer = document.getElementById('task-form-view');
     if (!formContainer) return;
@@ -366,6 +452,9 @@ class App {
       
       // Re-render filter panel (new category may have been added)
       this.renderFilterPanel();
+      
+      // Re-render statistics
+      this.renderStatistics();
       
       // Re-render tasks
       this.renderTasks();
@@ -543,6 +632,9 @@ class App {
       // Animate the status change
       this.animateTaskCompletion(taskId, result.data.status === 'completed');
       
+      // Re-render statistics immediately
+      this.renderStatistics();
+      
       // Re-render tasks after animation
       setTimeout(() => {
         this.renderTasks();
@@ -563,6 +655,9 @@ class App {
         
         // Re-render filter panel (category list may have changed)
         this.renderFilterPanel();
+        
+        // Re-render statistics
+        this.renderStatistics();
         
         this.renderTasks();
       }
