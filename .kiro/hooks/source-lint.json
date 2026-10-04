@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Source JavaScript Linter",
+      "trigger": "PostFileEdit",
+      "matcher": "src/.*\\.js$",
+      "description": "Runs npm run lint when JavaScript source files under src/ are modified.",
+      "action": {
+        "type": "command",
+        "command": "npm run lint",
+        "timeout": 30
+      }
+    }
+  ]
+}
