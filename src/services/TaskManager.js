@@ -47,7 +47,9 @@ export class TaskManager {
 
     // Create task with defaults
     const task = new Task({
-      id: crypto.randomUUID(),
+      id: (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+        ? crypto.randomUUID()
+        : 'uuid-' + Math.random().toString(36).substring(2, 11) + '-' + Date.now().toString(36),
       title: title.trim(),
       description: options.description?.trim() || '',
       priority: options.priority || Priority.Medium,
