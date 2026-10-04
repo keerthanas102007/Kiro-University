@@ -293,86 +293,141 @@ class App {
   }
 
   renderStatistics() {
-    const statisticsContainer = document.getElementById('statistics-view');
-    if (!statisticsContainer) return;
+    const statsContainer = document.getElementById('statistics-view');
+    if (!statsContainer) return;
 
     const allTasks = this.taskManager.getAllTasks();
     const stats = this.statisticsCalculator.calculateStatistics(allTasks);
 
-    const categories = Object.keys(stats.tasksByCategory);
-
-    statisticsContainer.innerHTML = `
-      <div class="stats-container">
-        <!-- Progress Bar Section -->
-        <div class="stats-progress-card">
-          <div class="stats-progress-header">
-            <span class="stats-progress-title">Overall Progress</span>
-            <span class="stats-progress-percent" id="stats-percentage">${stats.completionPercentage}%</span>
-          </div>
-          <div class="progress-bar-track" aria-label="Progress bar">
-            <div 
-              class="progress-bar-fill" 
-              id="stats-progress-fill"
-              style="width: ${stats.completionPercentage}%;"
-            ></div>
+    statsContainer.innerHTML = `
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <!-- Progress Overview -->
+        <div style="background: #f9fafb; padding: 1.25rem; border-radius: 8px; border: 1px solid #e5e7eb;">
+          <h3 style="margin: 0 0 1rem 0; font-size: 0.875rem; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.05em;">
+            Progress
+          </h3>
+          
+          <!-- Completion Percentage -->
+          <div style="margin-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <span style="font-size: 0.875rem; color: #6b7280;">Completion</span>
+              <span id="completion-percentage" style="font-size: 1.5rem; font-weight: 700; color: #4f46e5; transition: all 0.3s ease;">
+                ${stats.completionPercentage}%
+              </span>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div style="width: 100%; height: 12px; background: #e5e7eb; border-radius: 6px; overflow: hidden;">
+              <div 
+                id="progress-bar"
+                style="
+                  height: 100%; 
+                  background: linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%);
+                  width: ${stats.completionPercentage}%;
+                  transition: width 0.5s ease;
+                  border-radius: 6px;
+                "
+              ></div>
+            </div>
           </div>
         </div>
 
-        <!-- Metric Grid -->
-        <div class="stats-grid">
-          <div class="stat-card">
-            <span class="stat-value" id="stat-total">${stats.totalTasks}</span>
-            <span class="stat-label">Total Tasks</span>
-          </div>
-          <div class="stat-card stat-card-active">
-            <span class="stat-value" id="stat-active">${stats.activeTasks}</span>
-            <span class="stat-label">Active</span>
-          </div>
-          <div class="stat-card stat-card-completed">
-            <span class="stat-value" id="stat-completed">${stats.completedTasks}</span>
-            <span class="stat-label">Completed</span>
+        <!-- Task Counts -->
+        <div style="background: #f9fafb; padding: 1.25rem; border-radius: 8px; border: 1px solid #e5e7eb;">
+          <h3 style="margin: 0 0 1rem 0; font-size: 0.875rem; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.05em;">
+            Tasks
+          </h3>
+          
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <!-- Total -->
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 0.875rem; color: #6b7280;">Total</span>
+              <span id="total-count" style="font-size: 1.25rem; font-weight: 600; color: #111827; transition: all 0.3s ease;">
+                ${stats.totalTasks}
+              </span>
+            </div>
+            
+            <!-- Active -->
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 0.875rem; color: #6b7280;">Active</span>
+              <span id="active-count" style="font-size: 1.25rem; font-weight: 600; color: #f59e0b; transition: all 0.3s ease;">
+                ${stats.activeTasks}
+              </span>
+            </div>
+            
+            <!-- Completed -->
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 0.875rem; color: #6b7280;">Completed</span>
+              <span id="completed-count" style="font-size: 1.25rem; font-weight: 600; color: #10b981; transition: all 0.3s ease;">
+                ${stats.completedTasks}
+              </span>
+            </div>
           </div>
         </div>
 
         <!-- Priority Breakdown -->
-        <div class="stats-section">
-          <h4 class="stats-section-title">Priority Breakdown</h4>
-          <div class="stats-pills-list">
-            <div class="stat-pill stat-pill-critical">
-              <span>Critical</span>
-              <strong>${stats.tasksByPriority.Critical || 0}</strong>
-            </div>
-            <div class="stat-pill stat-pill-high">
-              <span>High</span>
-              <strong>${stats.tasksByPriority.High || 0}</strong>
-            </div>
-            <div class="stat-pill stat-pill-medium">
-              <span>Medium</span>
-              <strong>${stats.tasksByPriority.Medium || 0}</strong>
-            </div>
-            <div class="stat-pill stat-pill-low">
-              <span>Low</span>
-              <strong>${stats.tasksByPriority.Low || 0}</strong>
-            </div>
-          </div>
-        </div>
-
-        <!-- Category Breakdown -->
-        ${categories.length > 0 ? `
-          <div class="stats-section">
-            <h4 class="stats-section-title">Category Breakdown</h4>
-            <div class="stats-categories-list">
-              ${categories.map(cat => `
-                <div class="stat-category-item">
-                  <span class="stat-category-name">${this.escapeHtml(cat)}</span>
-                  <span class="stat-category-count">${stats.tasksByCategory[cat]}</span>
+        ${stats.totalTasks > 0 ? `
+          <div style="background: #f9fafb; padding: 1.25rem; border-radius: 8px; border: 1px solid #e5e7eb;">
+            <h3 style="margin: 0 0 1rem 0; font-size: 0.875rem; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.05em;">
+              By Priority
+            </h3>
+            
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+              ${Object.entries(stats.tasksByPriority).map(([priority, count]) => `
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="
+                      width: 8px; 
+                      height: 8px; 
+                      border-radius: 50%; 
+                      background: ${this.getPriorityColor(priority)};
+                    "></span>
+                    <span style="font-size: 0.875rem; color: #6b7280;">${priority}</span>
+                  </div>
+                  <span style="font-size: 0.875rem; font-weight: 600; color: #374151;">
+                    ${count}
+                  </span>
                 </div>
               `).join('')}
             </div>
           </div>
         ` : ''}
+
+        <!-- Category Breakdown -->
+        ${stats.totalTasks > 0 && Object.keys(stats.tasksByCategory).length > 0 ? `
+          <div style="background: #f9fafb; padding: 1.25rem; border-radius: 8px; border: 1px solid #e5e7eb;">
+            <h3 style="margin: 0 0 1rem 0; font-size: 0.875rem; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.05em;">
+              By Category
+            </h3>
+            
+            <div style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 200px; overflow-y: auto;">
+              ${Object.entries(stats.tasksByCategory)
+                .sort((a, b) => b[1] - a[1])
+                .map(([category, count]) => `
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.875rem; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                      ${this.escapeHtml(category)}
+                    </span>
+                    <span style="font-size: 0.875rem; font-weight: 600; color: #374151; margin-left: 0.5rem;">
+                      ${count}
+                    </span>
+                  </div>
+                `).join('')}
+            </div>
+          </div>
+        ` : ''}
       </div>
     `;
+  }
+
+  getPriorityColor(priority) {
+    const colors = {
+      'Critical': '#ef4444',
+      'High': '#f59e0b',
+      'Medium': '#3b82f6',
+      'Low': '#6b7280'
+    };
+    return colors[priority] || '#6b7280';
   }
 
   renderTaskForm() {
