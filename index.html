@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Todo App - Task Management</title>
+    <link rel="stylesheet" href="/src/styles/main.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="app-header">
+        <h1>Todo App</h1>
+        <p class="tagline">Manage your tasks with ease</p>
+      </header>
+
+      <main class="app-main">
+        <!-- Filter Panel (Left Column on Desktop) -->
+        <aside id="filter-panel" class="filter-panel">
+          <h2>Filters</h2>
+          <div id="filter-view"></div>
+        </aside>
+
+        <!-- Task List (Center Column) -->
+        <section id="task-section" class="task-section">
+          <div id="task-form-view" class="task-form"></div>
+          <div id="task-list-view" class="task-list"></div>
+        </section>
+
+        <!-- Statistics Panel (Right Column) -->
+        <aside id="statistics-panel" class="statistics-panel">
+          <h2>Progress</h2>
+          <div id="statistics-view"></div>
+        </aside>
+      </main>
+
+      <div id="notification-container" class="notification-container"></div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

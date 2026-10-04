@@ -1,0 +1,254 @@
+/* Reset and Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary-color: #4f46e5;
+  --primary-hover: #4338ca;
+  --success-color: #10b981;
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+  --background: #f9fafb;
+  --surface: #ffffff;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --border: #e5e7eb;
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: var(--background);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.app-header {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+  color: white;
+  padding: 2rem 1rem;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+}
+
+.app-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.app-header .tagline {
+  font-size: 1rem;
+  opacity: 0.9;
+}
+
+/* Main Layout */
+.app-main {
+  flex: 1;
+  display: grid;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Mobile: Single Column */
+@media (max-width: 767px) {
+  .app-main {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "form"
+      "filters"
+      "tasks"
+      "stats";
+  }
+
+  .filter-panel {
+    grid-area: filters;
+  }
+
+  .task-section {
+    grid-area: tasks;
+  }
+
+  .statistics-panel {
+    grid-area: stats;
+  }
+}
+
+/* Tablet: Two Columns */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .app-main {
+    grid-template-columns: 2fr 1fr;
+    grid-template-areas:
+      "filters stats"
+      "tasks stats";
+  }
+
+  .filter-panel {
+    grid-area: filters;
+  }
+
+  .task-section {
+    grid-area: tasks;
+  }
+
+  .statistics-panel {
+    grid-area: stats;
+  }
+}
+
+/* Desktop: Three Columns */
+@media (min-width: 1025px) {
+  .app-main {
+    grid-template-columns: 250px 1fr 300px;
+    grid-template-areas:
+      "filters tasks stats";
+  }
+
+  .filter-panel {
+    grid-area: filters;
+  }
+
+  .task-section {
+    grid-area: tasks;
+  }
+
+  .statistics-panel {
+    grid-area: stats;
+  }
+}
+
+/* Panel Styles */
+.filter-panel,
+.statistics-panel,
+.task-section {
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
+}
+
+.filter-panel h2,
+.statistics-panel h2 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--primary-color);
+  padding-bottom: 0.5rem;
+}
+
+/* Task Form */
+.task-form {
+  margin-bottom: 1.5rem;
+}
+
+/* Buttons */
+button {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  min-height: 44px;
+  min-width: 44px;
+}
+
+button:hover {
+  background: var(--primary-hover);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+/* Input Fields */
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: border-color 0.2s ease;
+  min-height: 44px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+
+.task-item {
+  animation: fadeIn 0.3s ease;
+}
+
+.task-item.removing {
+  animation: fadeOut 0.3s ease;
+}
+
+/* Notification Container */
+.notification-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 400px;
+}
+
+/* Responsive Touch Targets */
+@media (max-width: 767px) {
+  button,
+  input,
+  select {
+    min-height: 44px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}
