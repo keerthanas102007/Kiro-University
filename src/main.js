@@ -1,5 +1,6 @@
 import { TaskManager } from './services/TaskManager.js';
 import { StorageService } from './services/StorageService.js';
+import { FilterEngine } from './services/FilterEngine.js';
 
 /**
  * Main Application Entry Point
@@ -8,6 +9,15 @@ class App {
   constructor() {
     this.taskManager = new TaskManager();
     this.storageService = new StorageService();
+    this.filterEngine = new FilterEngine();
+    this.filterCriteria = {
+      searchQuery: '',
+      priorities: [],
+      categories: [],
+      statuses: [],
+      sortBy: 'createdAt',
+      sortOrder: 'desc'
+    };
     this.init();
   }
 
@@ -42,6 +52,7 @@ class App {
     }
 
     this.renderTaskForm();
+    this.renderFilterPanel();
     this.renderTasks();
   }
 
@@ -83,6 +94,198 @@ class App {
       notification.style.animation = 'slideOut 0.3s ease';
       setTimeout(() => notification.remove(), 300);
     }, 5000);
+  }
+
+  renderFilterPanel() {
+    const filterContainer = document.getElementById('filter-view');
+    if (!filterContainer) return;
+
+    const allTasks = this.taskManager.getAllTasks();
+    const categories = this.filterEngine.getUniqueCategories(allTasks);
+
+    filterContainer.innerHTML = `
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <!-- Search -->
+        <div>
+          <label style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #374151;">
+            Search
+          </label>
+          <input 
+            type="text" 
+            id="search-input"
+            placeholder="Search tasks..." 
+            value="${this.filterCriteria.searchQuery}"
+            style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.875rem;"
+          />
+        </div>
+
+        <!-- Sort -->
+        <div>
+          <label style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #374151;">
+            Sort By
+          </label>
+          <select 
+            id="sort-select"
+            style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.875rem;"
+          >
+            <option value="createdAt-desc" ${this.filterCriteria.sortBy === 'createdAt' && this.filterCriteria.sortOrder === 'desc' ? 'selected' : ''}>Newest First</option>
+            <option value="createdAt-asc" ${this.filterCriteria.sortBy === 'createdAt' && this.filterCriteria.sortOrder === 'asc' ? 'selected' : ''}>Oldest First</option>
+            <option value="priority-desc" ${this.filterCriteria.sortBy === 'priority' && this.filterCriteria.sortOrder === 'desc' ? 'selected' : ''}>Priority (High to Low)</option>
+            <option value="priority-asc" ${this.filterCriteria.sortBy === 'priority' && this.filterCriteria.sortOrder === 'asc' ? 'selected' : ''}>Priority (Low to High)</option>
+            <option value="title-asc" ${this.filterCriteria.sortBy === 'title' && this.filterCriteria.sortOrder === 'asc' ? 'selected' : ''}>Title (A-Z)</option>
+            <option value="title-desc" ${this.filterCriteria.sortBy === 'title' && this.filterCriteria.sortOrder === 'desc' ? 'selected' : ''}>Title (Z-A)</option>
+          </select>
+        </div>
+
+        <!-- Priority Filter -->
+        <div>
+          <label style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #374151;">
+            Priority
+          </label>
+          <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            ${['Critical', 'High', 'Medium', 'Low'].map(priority => `
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input 
+                  type="checkbox" 
+                  class="priority-filter" 
+                  value="${priority}"
+                  ${this.filterCriteria.priorities.includes(priority) ? 'checked' : ''}
+                  style="cursor: pointer;"
+                />
+                <span style="font-size: 0.875rem;">${priority}</span>
+              </label>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Status Filter -->
+        <div>
+          <label style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #374151;">
+            Status
+          </label>
+          <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input 
+                type="checkbox" 
+                class="status-filter" 
+                value="active"
+                ${this.filterCriteria.statuses.includes('active') ? 'checked' : ''}
+                style="cursor: pointer;"
+              />
+              <span style="font-size: 0.875rem;">Active</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input 
+                type="checkbox" 
+                class="status-filter" 
+                value="completed"
+                ${this.filterCriteria.statuses.includes('completed') ? 'checked' : ''}
+                style="cursor: pointer;"
+              />
+              <span style="font-size: 0.875rem;">Completed</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Category Filter -->
+        ${categories.length > 0 ? `
+          <div>
+            <label style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #374151;">
+              Category
+            </label>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 200px; overflow-y: auto;">
+              ${categories.map(category => `
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                  <input 
+                    type="checkbox" 
+                    class="category-filter" 
+                    value="${this.escapeHtml(category)}"
+                    ${this.filterCriteria.categories.includes(category) ? 'checked' : ''}
+                    style="cursor: pointer;"
+                  />
+                  <span style="font-size: 0.875rem;">${this.escapeHtml(category)}</span>
+                </label>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Clear Filters -->
+        <button 
+          id="clear-filters-btn"
+          style="
+            background: #6b7280; 
+            color: white; 
+            padding: 0.5rem; 
+            border: none; 
+            border-radius: 6px; 
+            font-size: 0.875rem; 
+            cursor: pointer;
+          "
+        >
+          Clear All Filters
+        </button>
+      </div>
+    `;
+
+    // Attach event listeners
+    document.getElementById('search-input')?.addEventListener('input', (e) => {
+      this.filterCriteria.searchQuery = e.target.value;
+      this.renderTasks();
+    });
+
+    document.getElementById('sort-select')?.addEventListener('change', (e) => {
+      const [sortBy, sortOrder] = e.target.value.split('-');
+      this.filterCriteria.sortBy = sortBy;
+      this.filterCriteria.sortOrder = sortOrder;
+      this.renderTasks();
+    });
+
+    document.querySelectorAll('.priority-filter').forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          this.filterCriteria.priorities.push(e.target.value);
+        } else {
+          this.filterCriteria.priorities = this.filterCriteria.priorities.filter(p => p !== e.target.value);
+        }
+        this.renderTasks();
+      });
+    });
+
+    document.querySelectorAll('.status-filter').forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          this.filterCriteria.statuses.push(e.target.value);
+        } else {
+          this.filterCriteria.statuses = this.filterCriteria.statuses.filter(s => s !== e.target.value);
+        }
+        this.renderTasks();
+      });
+    });
+
+    document.querySelectorAll('.category-filter').forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          this.filterCriteria.categories.push(e.target.value);
+        } else {
+          this.filterCriteria.categories = this.filterCriteria.categories.filter(c => c !== e.target.value);
+        }
+        this.renderTasks();
+      });
+    });
+
+    document.getElementById('clear-filters-btn')?.addEventListener('click', () => {
+      this.filterCriteria = {
+        searchQuery: '',
+        priorities: [],
+        categories: [],
+        statuses: [],
+        sortBy: 'createdAt',
+        sortOrder: 'desc'
+      };
+      this.renderFilterPanel();
+      this.renderTasks();
+    });
   }
 
   renderTaskForm() {
@@ -161,6 +364,9 @@ class App {
       // Save to storage
       this.saveTasks();
       
+      // Re-render filter panel (new category may have been added)
+      this.renderFilterPanel();
+      
       // Re-render tasks
       this.renderTasks();
       
@@ -174,24 +380,40 @@ class App {
   }
 
   renderTasks() {
-    const tasks = this.taskManager.getAllTasks();
+    const allTasks = this.taskManager.getAllTasks();
+    const filteredTasks = this.filterEngine.applyFilters(allTasks, this.filterCriteria);
     const taskListView = document.getElementById('task-list-view');
     
     if (!taskListView) return;
 
-    if (tasks.length === 0) {
-      taskListView.innerHTML = '<p style="text-align: center; color: #6b7280;">No tasks yet. Create your first task!</p>';
+    // Show empty state if no tasks match
+    if (filteredTasks.length === 0) {
+      const hasFilters = this.filterCriteria.searchQuery || 
+                         this.filterCriteria.priorities.length > 0 ||
+                         this.filterCriteria.categories.length > 0 ||
+                         this.filterCriteria.statuses.length > 0;
+      
+      if (hasFilters) {
+        taskListView.innerHTML = `
+          <div style="text-align: center; padding: 2rem; color: #6b7280;">
+            <p style="font-size: 1.125rem; margin-bottom: 0.5rem;">No tasks found</p>
+            <p style="font-size: 0.875rem;">Try adjusting your search or filters</p>
+          </div>
+        `;
+      } else {
+        taskListView.innerHTML = '<p style="text-align: center; color: #6b7280;">No tasks yet. Create your first task!</p>';
+      }
       return;
     }
 
     taskListView.innerHTML = `
       <div style="display: flex; flex-direction: column; gap: 1rem;">
-        ${tasks.map(task => this.renderTaskCard(task)).join('')}
+        ${filteredTasks.map(task => this.renderTaskCard(task)).join('')}
       </div>
     `;
 
     // Attach event listeners to buttons
-    tasks.forEach(task => {
+    filteredTasks.forEach(task => {
       const completeBtn = document.getElementById(`complete-${task.id}`);
       const deleteBtn = document.getElementById(`delete-${task.id}`);
       
@@ -338,6 +560,9 @@ class App {
       if (result.success) {
         // Save to storage
         this.saveTasks();
+        
+        // Re-render filter panel (category list may have changed)
+        this.renderFilterPanel();
         
         this.renderTasks();
       }
