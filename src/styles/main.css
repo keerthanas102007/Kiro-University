@@ -188,6 +188,10 @@ button.uncomplete-btn:hover {
   background: #059669;
 }
 
+button.edit-btn:hover {
+  background: #2563eb;
+}
+
 button.delete-btn:hover {
   background: #dc2626;
 }

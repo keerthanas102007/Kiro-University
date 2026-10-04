@@ -12,6 +12,7 @@ class App {
     this.storageService = new StorageService();
     this.filterEngine = new FilterEngine();
     this.statisticsCalculator = new StatisticsCalculator();
+    this.editingTaskId = null;
     this.filterCriteria = {
       searchQuery: '',
       priorities: [],
@@ -503,20 +504,51 @@ class App {
 
     // Attach event listeners to buttons
     filteredTasks.forEach(task => {
-      const completeBtn = document.getElementById(`complete-${task.id}`);
-      const deleteBtn = document.getElementById(`delete-${task.id}`);
-      
-      if (completeBtn) {
-        completeBtn.addEventListener('click', () => this.handleToggleComplete(task.id));
-      }
-      
-      if (deleteBtn) {
-        deleteBtn.addEventListener('click', () => this.handleDeleteTask(task.id));
+      if (this.editingTaskId === task.id) {
+        const editForm = document.getElementById(`edit-form-${task.id}`);
+        const cancelBtn = document.getElementById(`cancel-edit-${task.id}`);
+
+        if (editForm) {
+          editForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleSaveTaskEdit(task.id);
+          });
+        }
+
+        if (cancelBtn) {
+          cancelBtn.addEventListener('click', () => {
+            this.editingTaskId = null;
+            this.renderTasks();
+          });
+        }
+      } else {
+        const editBtn = document.getElementById(`edit-${task.id}`);
+        const completeBtn = document.getElementById(`complete-${task.id}`);
+        const deleteBtn = document.getElementById(`delete-${task.id}`);
+
+        if (editBtn) {
+          editBtn.addEventListener('click', () => {
+            this.editingTaskId = task.id;
+            this.renderTasks();
+          });
+        }
+
+        if (completeBtn) {
+          completeBtn.addEventListener('click', () => this.handleToggleComplete(task.id));
+        }
+
+        if (deleteBtn) {
+          deleteBtn.addEventListener('click', () => this.handleDeleteTask(task.id));
+        }
       }
     });
   }
 
   renderTaskCard(task) {
+    if (this.editingTaskId === task.id) {
+      return this.renderEditTaskCard(task);
+    }
+
     const isCompleted = task.status === 'completed';
     
     return `
@@ -544,6 +576,25 @@ class App {
             ${this.escapeHtml(task.title)}
           </h3>
           <div style="display: flex; gap: 0.5rem; margin-left: 1rem;">
+            <button
+              id="edit-${task.id}"
+              class="edit-btn"
+              style="
+                background: #3b82f6;
+                color: white;
+                border: none;
+                padding: 0.5rem 0.75rem;
+                border-radius: 6px;
+                font-size: 0.875rem;
+                cursor: pointer;
+                transition: background 0.2s ease;
+                min-height: 44px;
+                min-width: 44px;
+              "
+              title="Edit task"
+            >
+              ✏️ Edit
+            </button>
             <button
               id="complete-${task.id}"
               style="
@@ -643,6 +694,10 @@ class App {
   }
 
   handleDeleteTask(taskId) {
+    if (this.editingTaskId === taskId) {
+      this.editingTaskId = null;
+    }
+
     // Animate removal
     this.animateTaskRemoval(taskId);
     
@@ -662,6 +717,138 @@ class App {
         this.renderTasks();
       }
     }, 300);
+  }
+
+  renderEditTaskCard(task) {
+    return `
+      <div 
+        id="task-${task.id}" 
+        class="task-item task-item-editing" 
+        style="
+          padding: 1.25rem;
+          border: 2px solid #4f46e5;
+          border-radius: 8px;
+          background: #f8fafc;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          transition: all 0.3s ease;
+        "
+      >
+        <h4 style="margin: 0 0 0.75rem 0; color: #1e293b; font-size: 1rem; font-weight: 600;">Edit Task</h4>
+        <form id="edit-form-${task.id}" style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <div>
+            <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem; color: #374151;">Title (required)</label>
+            <input 
+              type="text" 
+              id="edit-title-${task.id}" 
+              value="${this.escapeHtml(task.title)}" 
+              required 
+              style="padding: 0.6rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95rem; width: 100%;"
+            />
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem; color: #374151;">Description</label>
+            <textarea 
+              id="edit-description-${task.id}" 
+              rows="3"
+              style="padding: 0.6rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95rem; width: 100%; resize: vertical;"
+            >${this.escapeHtml(task.description || '')}</textarea>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div>
+              <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem; color: #374151;">Priority</label>
+              <select 
+                id="edit-priority-${task.id}"
+                style="padding: 0.6rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95rem; width: 100%;"
+              >
+                <option value="Low" ${task.priority === 'Low' ? 'selected' : ''}>Low Priority</option>
+                <option value="Medium" ${task.priority === 'Medium' ? 'selected' : ''}>Medium Priority</option>
+                <option value="High" ${task.priority === 'High' ? 'selected' : ''}>High Priority</option>
+                <option value="Critical" ${task.priority === 'Critical' ? 'selected' : ''}>Critical Priority</option>
+              </select>
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem; color: #374151;">Category</label>
+              <input 
+                type="text" 
+                id="edit-category-${task.id}" 
+                value="${this.escapeHtml(task.category || '')}"
+                placeholder="Category"
+                style="padding: 0.6rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95rem; width: 100%;"
+              />
+            </div>
+          </div>
+          <div id="edit-error-${task.id}" style="color: #ef4444; font-size: 0.875rem; display: none;"></div>
+          <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.25rem;">
+            <button 
+              type="button" 
+              id="cancel-edit-${task.id}"
+              style="
+                background: #6b7280; 
+                color: white; 
+                border: none; 
+                padding: 0.5rem 1rem; 
+                border-radius: 6px; 
+                font-size: 0.875rem; 
+                cursor: pointer;
+                min-height: 44px;
+              "
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit" 
+              id="save-edit-${task.id}"
+              style="
+                background: #4f46e5; 
+                color: white; 
+                border: none; 
+                padding: 0.5rem 1rem; 
+                border-radius: 6px; 
+                font-size: 0.875rem; 
+                cursor: pointer;
+                min-height: 44px;
+                font-weight: 500;
+              "
+            >
+              Save
+            </button>
+          </div>
+        </form>
+      </div>
+    `;
+  }
+
+  handleSaveTaskEdit(taskId) {
+    const titleInput = document.getElementById(`edit-title-${taskId}`);
+    const descriptionInput = document.getElementById(`edit-description-${taskId}`);
+    const prioritySelect = document.getElementById(`edit-priority-${taskId}`);
+    const categoryInput = document.getElementById(`edit-category-${taskId}`);
+
+    const title = titleInput ? titleInput.value : '';
+    const description = descriptionInput ? descriptionInput.value : '';
+    const priority = prioritySelect ? prioritySelect.value : undefined;
+    const category = categoryInput ? categoryInput.value : undefined;
+
+    const result = this.taskManager.updateTask(taskId, {
+      title,
+      description,
+      priority,
+      category: category !== undefined ? (category.trim() || 'Uncategorized') : undefined,
+    });
+
+    if (result.success) {
+      this.editingTaskId = null;
+      this.saveTasks();
+      this.renderFilterPanel();
+      this.renderStatistics();
+      this.renderTasks();
+    } else {
+      const errorDiv = document.getElementById(`edit-error-${taskId}`);
+      if (errorDiv) {
+        errorDiv.textContent = result.error;
+        errorDiv.style.display = 'block';
+      }
+    }
   }
 
   animateTaskCompletion(taskId, isCompleting) {
