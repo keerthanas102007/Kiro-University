@@ -172,10 +172,24 @@ button {
 
 button:hover {
   background: var(--primary-hover);
+  transform: translateY(-1px);
 }
 
 button:active {
   transform: scale(0.98);
+}
+
+/* Button variants */
+button.complete-btn:hover {
+  background: #4338ca;
+}
+
+button.uncomplete-btn:hover {
+  background: #059669;
+}
+
+button.delete-btn:hover {
+  background: #dc2626;
 }
 
 /* Input Fields */

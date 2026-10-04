@@ -121,6 +121,14 @@ export class TaskManager {
       updates.description = updates.description.trim();
     }
 
+    // Allow status updates (for uncompleting tasks)
+    if (updates.status !== undefined) {
+      const validStatuses = Object.values(TaskStatus);
+      if (!validStatuses.includes(updates.status)) {
+        return { success: false, error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` };
+      }
+    }
+
     try {
       const updatedTask = this.taskList.update(taskId, updates);
       return { success: true, data: updatedTask };
