@@ -74,6 +74,18 @@ The application follows a layered architecture:
 - **Testing**: Jest, fast-check (property-based testing)
 - **Code Quality**: ESLint, Prettier
 
+## Development Tools
+
+### MCP Integration
+
+This project uses Kiro's **Fetch MCP server** for development assistance. The MCP (Model Context Protocol) integration enables AI-assisted web content fetching during development tasks such as:
+
+- Looking up documentation and API references
+- Researching best practices and examples
+- Verifying library versions and compatibility
+
+The Fetch MCP server is configured in `.kiro/settings/mcp.json` and runs automatically when working with Kiro.
+
 ## Project Structure
 
 ```
